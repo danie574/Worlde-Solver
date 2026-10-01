@@ -1,0 +1,2 @@
+javac WordleSolver.java
+java WordleSolver
