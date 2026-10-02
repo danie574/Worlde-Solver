@@ -21,7 +21,7 @@ public class WordleSolver {
         if (dictionary.isEmpty()) {
             System.out.println("No words were loaded.");
             System.out.println(
-                    "Make sure words.txt is in the project directory."
+                    "Make sure wordle-valid-words.txt is in the project directory."
             );
             scanner.close();
             return;
@@ -44,11 +44,15 @@ public class WordleSolver {
                 '_', '_', '_', '_', '_'
         };
 
+        // Stores letters that we know are NOT in the word.
+        List<Character> excludedLetters = new ArrayList<>();
+
         boolean running = true;
 
         while (running) {
 
             displayPattern(knownLetters);
+            displayExcludedLetters(excludedLetters);
 
             System.out.println();
             System.out.println("1 - Set first letter");
@@ -56,7 +60,8 @@ public class WordleSolver {
             System.out.println("3 - Set third letter");
             System.out.println("4 - Set fourth letter");
             System.out.println("5 - Set fifth letter");
-            System.out.println("6 - Generate / Print candidates");
+            System.out.println("6 - Exclude a letter");
+            System.out.println("7 - Generate / Print candidates");
             System.out.println("q - Quit");
 
             System.out.print("Choice: ");
@@ -78,7 +83,7 @@ public class WordleSolver {
             // GENERATE / PRINT
             // =========================
 
-            if (choice.equals("6")) {
+            if (choice.equals("7")) {
 
                 System.out.println();
                 System.out.println(
@@ -88,7 +93,8 @@ public class WordleSolver {
                 List<String> candidates =
                         findCandidates(
                                 dictionary,
-                                knownLetters
+                                knownLetters,
+                                excludedLetters
                         );
 
                 System.out.println(
@@ -107,6 +113,86 @@ public class WordleSolver {
 
                 continue;
             }
+
+            // =========================
+            // EXCLUDE LETTER
+            // =========================
+
+// =========================
+// EXCLUDE LETTERS
+// =========================
+
+if (choice.equals("6")) {
+
+    System.out.print(
+            "Enter letters that are NOT in the word: "
+    );
+
+    String input = scanner.nextLine()
+            .trim()
+            .toLowerCase();
+
+    if (input.isEmpty()) {
+
+        System.out.println();
+        System.out.println(
+                "Please enter at least one letter."
+        );
+        System.out.println();
+
+        continue;
+    }
+
+    boolean addedAny = false;
+
+    for (char letter : input.toCharArray()) {
+
+        // Ignore spaces
+        if (Character.isWhitespace(letter)) {
+            continue;
+        }
+
+        // Make sure it is a letter
+        if (!Character.isLetter(letter)) {
+
+            System.out.println(
+                    "Ignoring invalid character: '"
+                            + letter
+                            + "'."
+            );
+
+            continue;
+        }
+
+        // Don't add the same letter twice
+        if (!excludedLetters.contains(letter)) {
+
+            excludedLetters.add(letter);
+            addedAny = true;
+        }
+    }
+
+    System.out.println();
+
+    if (addedAny) {
+
+        System.out.println(
+                "Excluded letters updated."
+        );
+
+        displayExcludedLetters(excludedLetters);
+
+    } else {
+
+        System.out.println(
+                "No new letters were added."
+        );
+    }
+
+    System.out.println();
+
+    continue;
+}
 
             // =========================
             // SET LETTER
@@ -174,7 +260,7 @@ public class WordleSolver {
     }
 
     /**
-     * Loads words.txt and keeps only valid
+     * Loads the dictionary and keeps only valid
      * five-letter English words.
      */
     private static List<String> loadDictionary() {
@@ -219,11 +305,13 @@ public class WordleSolver {
 
     /**
      * Searches the dictionary for words matching
-     * the currently confirmed letters.
+     * the confirmed letters and excluding
+     * all known incorrect letters.
      */
     private static List<String> findCandidates(
             List<String> dictionary,
-            char[] knownLetters) {
+            char[] knownLetters,
+            List<Character> excludedLetters) {
 
         List<String> candidates =
                 new ArrayList<>();
@@ -232,6 +320,10 @@ public class WordleSolver {
 
             boolean matches = true;
 
+            // =========================
+            // CHECK CONFIRMED LETTERS
+            // =========================
+
             for (int i = 0; i < WORD_LENGTH; i++) {
 
                 // If we know a letter at this position,
@@ -239,6 +331,23 @@ public class WordleSolver {
                 // letter there.
                 if (knownLetters[i] != '_' &&
                         word.charAt(i) != knownLetters[i]) {
+
+                    matches = false;
+                    break;
+                }
+            }
+
+            if (!matches) {
+                continue;
+            }
+
+            // =========================
+            // CHECK EXCLUDED LETTERS
+            // =========================
+
+            for (char excludedLetter : excludedLetters) {
+
+                if (word.indexOf(excludedLetter) != -1) {
 
                     matches = false;
                     break;
@@ -264,6 +373,33 @@ public class WordleSolver {
         );
 
         for (char letter : knownLetters) {
+
+            System.out.print(
+                    letter + " "
+            );
+        }
+
+        System.out.println();
+    }
+
+    /**
+     * Displays the letters known to be absent.
+     */
+    private static void displayExcludedLetters(
+            List<Character> excludedLetters) {
+
+        System.out.print(
+                "Excluded letters: "
+        );
+
+        if (excludedLetters.isEmpty()) {
+
+            System.out.println("none");
+
+            return;
+        }
+
+        for (char letter : excludedLetters) {
 
             System.out.print(
                     letter + " "
